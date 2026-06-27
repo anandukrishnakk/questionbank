@@ -1,0 +1,46 @@
+name: Deploy React Frontend
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'questionbank-frontend/**'
+
+jobs:
+  deploy-frontend:
+    name: Build & Deploy React Frontend
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: questionbank-frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: questionbank-frontend
+        run: npm ci
+
+      - name: Build React app
+        working-directory: questionbank-frontend
+        run: npm run build
+        env:
+          NODE_ENV: production
+
+      - name: Deploy Frontend via FTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          local-dir: ./questionbank-frontend/dist/
+          server-dir: /paperstall.info/
+          exclude: |
+            **/.git*
+            **/.git*/**

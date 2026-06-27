@@ -1,0 +1,45 @@
+name: Deploy Laravel API
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'questionbank-api/**'
+
+jobs:
+  deploy-api:
+    name: Build & Deploy Laravel API
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mbstring, bcmath, pdo, pdo_mysql, curl, xml
+          coverage: none
+
+      - name: Install Composer dependencies
+        working-directory: questionbank-api
+        run: composer install --no-dev --optimize-autoloader --no-interaction
+
+      - name: Deploy API via FTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          local-dir: ./questionbank-api/
+          server-dir: /paperstall.info/api/
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/node_modules/**
+            **/tests/**
+            .env
+            .env.example
+            README.md
